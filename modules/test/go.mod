@@ -7,7 +7,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.5.1
 	github.com/onsi/gomega v1.24.1
 	github.com/openstack-k8s-operators/lib-common/modules/common v0.0.0-20221222082851-4ea36851a5fb
-	golang.org/x/mod v0.6.0
+	golang.org/x/mod v0.7.0
 	k8s.io/api v0.25.4
 	k8s.io/apimachinery v0.25.4
 	sigs.k8s.io/controller-runtime v0.13.1
