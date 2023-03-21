@@ -18,6 +18,7 @@ package storage
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"github.com/openstack-k8s-operators/lib-common/modules/common/util"
 )
 
 // ExtraVolType represents a "label" that can be optionally added to the VolMounts
@@ -82,3 +83,14 @@ func (v *VolMounts) Propagate(svc []PropagationType) []VolMounts {
 
 	return vl
 }
+
+// Hash function creates a hash of a ExtraMounts and returns it as a safe
+// encoded string.
+func Hash(ev []VolMounts) (string, error) {
+
+	if ev == nil {
+		return "", fmt.Errorf("nil VolMounts doesn't have data to hash")
+	}
+	return util.ObjectHash(ev)
+}
+
