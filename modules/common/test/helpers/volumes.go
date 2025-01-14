@@ -50,3 +50,32 @@ func (tc *TestHelper) AssertVolumeMountExists(name string, subPath string, volum
 
 	return exist
 }
+
+// AssertVolumeMountWithPathExists - asserts the existence of a named
+// volumeMount with a given mountPath (if provided), and subPath (if provided),
+// in a []corev1.VolumeMount.
+//
+// Example usage:
+//
+//	th.AssertVolumeMountExistsWithPath("name", "mountPath", "subPath", []corev1.VolumeMount{...})
+func (tc *TestHelper) AssertVolumeMountExistsWithPath(name string, mountPath string, subPath string, volumeMounts []corev1.VolumeMount) bool {
+	exist := false
+	for _, v := range volumeMounts {
+		if v.Name == name {
+			// subPath is provided and we should check the value
+			if subPath != "" {
+				if subPath == v.SubPath {
+					exist = true
+				}
+			}
+			// mountPath is provided and we should check the value
+			if mountPath != "" {
+				if mountPath == v.MountPath {
+					exist = true
+				}
+			}
+		}
+	}
+	gomega.Expect(exist).To(gomega.BeTrue())
+	return exist
+}
