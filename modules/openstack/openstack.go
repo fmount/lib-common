@@ -44,15 +44,18 @@ type OpenStack struct {
 
 // AuthOpts -
 type AuthOpts struct {
-	AuthURL    string
-	Username   string
-	Password   string
-	TenantName string
-	TenantID   string
-	DomainName string
-	Region     string
-	Scope      *gophercloud.AuthScope
-	TLS        *TLSConfig
+	AuthURL                     string
+	Username                    string
+	Password                    string
+	TenantName                  string
+	TenantID                    string
+	DomainName                  string
+	Region                      string
+	Scope                       *gophercloud.AuthScope
+	TLS                         *TLSConfig
+	ApplicationCredentialID     string
+	ApplicationCredentialName   string
+	ApplicationCredentialSecret string
 }
 
 // TLSConfig - settings
@@ -69,12 +72,15 @@ func GetOpenStackProvider(
 	cfg AuthOpts,
 ) (*gophercloud.ProviderClient, error) {
 	opts := gophercloud.AuthOptions{
-		IdentityEndpoint: cfg.AuthURL,
-		Username:         cfg.Username,
-		Password:         cfg.Password,
-		TenantName:       cfg.TenantName,
-		TenantID:         cfg.TenantID,
-		DomainName:       cfg.DomainName,
+		IdentityEndpoint:            cfg.AuthURL,
+		Username:                    cfg.Username,
+		Password:                    cfg.Password,
+		TenantName:                  cfg.TenantName,
+		TenantID:                    cfg.TenantID,
+		DomainName:                  cfg.DomainName,
+		ApplicationCredentialID:     cfg.ApplicationCredentialID,
+		ApplicationCredentialName:   cfg.ApplicationCredentialName,
+		ApplicationCredentialSecret: cfg.ApplicationCredentialSecret,
 	}
 	if cfg.Scope != nil {
 		opts.Scope = cfg.Scope
