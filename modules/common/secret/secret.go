@@ -439,7 +439,7 @@ func VerifySecret(
 			log.FromContext(ctx).Info("Secret not found", "secretName", secretName)
 			return "",
 				ctrl.Result{RequeueAfter: requeueTimeout},
-				nil
+				err
 		}
 		return "", ctrl.Result{}, fmt.Errorf("get secret %s failed: %w", secretName, err)
 	}
@@ -490,7 +490,7 @@ func VerifySecretFields(
 			log.FromContext(ctx).Info("Secret not found", "secretName", secretName)
 			return "",
 				ctrl.Result{RequeueAfter: requeueTimeout},
-				nil
+				err
 		}
 		return "", ctrl.Result{}, fmt.Errorf("get secret %s failed: %w", secretName, err)
 	}
