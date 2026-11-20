@@ -33,11 +33,13 @@ import (
 	"github.com/openstack-k8s-operators/lib-common/modules/common/helper"
 	corev1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -557,22 +559,50 @@ func defaultTemplateConfigMapMapFunc(c client.Client, cr client.Object) handler.
 		if !isDefaultTemplateConfigMap(obj) {
 			return nil
 		}
+		Log := log.FromContext(ctx)
+
 		gvk, err := apiutil.GVKForObject(cr, c.Scheme())
 		if err != nil {
+			Log.Error(err, "Unable to resolve the kind watching the template defaults ConfigMap")
 			return nil
 		}
-		list := &unstructured.UnstructuredList{}
-		list.SetGroupVersionKind(gvk)
+
+		// A typed list is served from the client cache, while an unstructured
+		// one is always a live API call: a transient failure there would drop
+		// the event and leave the rendered config stale until the next resync.
+		gvk.Kind += "List"
+		listObj, err := c.Scheme().New(gvk)
+		if err != nil {
+			Log.Error(err, "Unable to build the list for the kind watching the template defaults ConfigMap", "GroupVersionKind", gvk)
+			return nil
+		}
+		list, ok := listObj.(client.ObjectList)
+		if !ok {
+			Log.Error(nil, "Registered list type is not a client.ObjectList", "GroupVersionKind", gvk)
+			return nil
+		}
+
 		if err := c.List(ctx, list, client.InNamespace(obj.GetNamespace())); err != nil {
+			Log.Error(err, "Unable to list the CRs to reconcile for the template defaults ConfigMap", "GroupVersionKind", gvk, "Namespace", obj.GetNamespace())
 			return nil
 		}
-		requests := make([]reconcile.Request, 0, len(list.Items))
-		for _, item := range list.Items {
+
+		requests := []reconcile.Request{}
+		if err := meta.EachListItem(list, func(item runtime.Object) error {
+			acc, err := meta.Accessor(item)
+			if err != nil {
+				return err
+			}
 			requests = append(requests, reconcile.Request{NamespacedName: types.NamespacedName{
-				Name:      item.GetName(),
-				Namespace: item.GetNamespace(),
+				Name:      acc.GetName(),
+				Namespace: acc.GetNamespace(),
 			}})
+			return nil
+		}); err != nil {
+			Log.Error(err, "Unable to read the CRs listed for the template defaults ConfigMap", "GroupVersionKind", gvk)
+			return nil
 		}
+
 		return requests
 	}
 }
